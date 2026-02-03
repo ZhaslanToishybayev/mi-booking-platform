@@ -25,15 +25,15 @@
 
 ## 📸 Скриншоты
 
-*(Место для ваших скриншотов. Добавьте файлы в папку `docs/screenshots` и раскомментируйте строки ниже)*
+*(Скриншоты интерфейса. Вы можете заменить эти изображения на реальные в папке `docs/screenshots`)*
 
 | Главная страница | Детали события |
 |------------------|----------------|
-| ![Home](docs/screenshots/home.png) | ![Details](docs/screenshots/details.png) |
+| ![Home](https://placehold.co/600x400/0A0A0B/00D4FF?text=Home+Page) | ![Details](https://placehold.co/600x400/0A0A0B/8B5CF6?text=Event+Details) |
 
 | Бронирование | Мои билеты |
 |--------------|------------|
-| ![Booking](docs/screenshots/booking.png) | ![My Tickets](docs/screenshots/tickets.png) |
+| ![Booking](https://placehold.co/600x400/0A0A0B/EC4899?text=Booking+Form) | ![My Tickets](https://placehold.co/600x400/0A0A0B/00D4FF?text=My+Tickets) |
 
 ---
 
@@ -96,19 +96,19 @@ docker-compose exec backend php artisan migrate:fresh --seed
 
 ```mermaid
 graph TD
-    User[User Browser] -->|HTTP/HTTPS| Nginx[Nginx Gateway]
-    Nginx -->|Static Assets| React[React App (Frontend)]
-    Nginx -->|API Requests| Laravel[Laravel API (Backend)]
+    User["User Browser"] -->|HTTP/HTTPS| Nginx["Nginx Gateway"]
+    Nginx -->|"Static Assets"| React["React App (Frontend)"]
+    Nginx -->|"API Requests"| Laravel["Laravel API (Backend)"]
     
     subgraph Docker Containers
         React
         Laravel
-        MySQL[(MySQL Database)]
+        MySQL[("MySQL Database")]
     end
     
     Laravel -->|Query| MySQL
-    Laravel -->|Generate| PDF[DomPDF Service]
-    Laravel -->|Generate| QR[QRCode Service]
+    Laravel -->|Generate| PDF["DomPDF Service"]
+    Laravel -->|Generate| QR["QRCode Service"]
 ```
 
 ## 📁 Структура проекта
