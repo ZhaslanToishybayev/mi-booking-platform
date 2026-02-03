@@ -29,11 +29,11 @@
 
 | Главная страница | Детали события |
 |------------------|----------------|
-| ![Home](docs/screenshots/home.png) | ![Details](docs/screenshots/details.png) |
+| ![Home](docs/screenshots/home.svg) | ![Details](docs/screenshots/details.svg) |
 
 | Бронирование | Мои билеты |
 |--------------|------------|
-| ![Booking](docs/screenshots/booking.png) | ![My Tickets](docs/screenshots/tickets.png) |
+| ![Booking](docs/screenshots/booking.svg) | ![My Tickets](docs/screenshots/tickets.svg) |
 
 ---
 
