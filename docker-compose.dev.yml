@@ -1,0 +1,35 @@
+version: '3.8'
+
+# Для локальной разработки
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mi-booking-db-dev
+    environment:
+      MYSQL_DATABASE: mi_booking
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_PASSWORD: secret
+      MYSQL_USER: mi_user
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_dev:/var/lib/mysql
+    networks:
+      - mi-dev
+
+  mailpit:
+    image: axllent/mailpit
+    container_name: mi-booking-mailpit
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - mi-dev
+
+volumes:
+  mysql_dev:
+
+networks:
+  mi-dev:
+    driver: bridge

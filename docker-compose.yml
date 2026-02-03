@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: mi-booking-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:-mi_booking}
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_USER: ${DB_USERNAME:-mi_user}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - mi-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mi-booking-backend
+    restart: unless-stopped
+    environment:
+      APP_ENV: production
+      APP_KEY: ${APP_KEY}
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL:-http://localhost}
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: ${DB_DATABASE:-mi_booking}
+      DB_USERNAME: ${DB_USERNAME:-mi_user}
+      DB_PASSWORD: ${DB_PASSWORD:-secret}
+      LOG_CHANNEL: stderr
+    volumes:
+      - ./backend:/var/www
+      - /var/www/vendor
+    networks:
+      - mi-network
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "
+        composer install --optimize-autoloader --no-dev &&
+        php artisan migrate --force &&
+        php artisan storage:link &&
+        php-fpm
+      "
+
+  # React Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mi-booking-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    networks:
+      - mi-network
+    depends_on:
+      - backend
+
+  # Nginx для backend API
+  nginx:
+    image: nginx:alpine
+    container_name: mi-booking-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www
+      - ./deploy/nginx-api.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - mi-network
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
+
+networks:
+  mi-network:
+    driver: bridge
