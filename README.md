@@ -29,11 +29,11 @@
 
 | Главная страница | Детали события |
 |------------------|----------------|
-| ![Home](https://placehold.co/600x400/0A0A0B/00D4FF?text=Home+Page) | ![Details](https://placehold.co/600x400/0A0A0B/8B5CF6?text=Event+Details) |
+| ![Home](docs/screenshots/home.png) | ![Details](docs/screenshots/details.png) |
 
 | Бронирование | Мои билеты |
 |--------------|------------|
-| ![Booking](https://placehold.co/600x400/0A0A0B/EC4899?text=Booking+Form) | ![My Tickets](https://placehold.co/600x400/0A0A0B/00D4FF?text=My+Tickets) |
+| ![Booking](docs/screenshots/booking.png) | ![My Tickets](docs/screenshots/tickets.png) |
 
 ---
 
