@@ -40,6 +40,9 @@ COPY . .
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
+# Установка драйвера кэша для сборки
+ENV CACHE_DRIVER=file
+
 # Очистка и оптимизация
 RUN php artisan optimize:clear || true
 
