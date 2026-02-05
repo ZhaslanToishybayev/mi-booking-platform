@@ -16,8 +16,10 @@ return new class extends Migration
             $table->dateTime('start_date');
             $table->dateTime('end_date');
             $table->string('image_url', 500)->nullable();
-            $table->enum('status', ['active', 'cancelled', 'completed'])->default('active');
+            $table->string('status')->default('active');
             $table->timestamps();
+
+            $table->checkIn(['status'], ['active', 'cancelled', 'completed']);
 
             $table->index('status');
             $table->index('start_date');
