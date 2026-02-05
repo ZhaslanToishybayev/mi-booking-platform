@@ -10,8 +10,6 @@ test.describe('Generate Screenshots', () => {
     // 1. Home Page
     console.log('Capturing Home Page...');
     await page.goto('/');
-    // Wait for network idle to ensure API calls finished
-    await page.waitForLoadState('networkidle');
     await page.waitForSelector('[data-testid="event-card"]', { state: 'visible', timeout: 60000 });
     // Wait a bit for animations to settle
     await page.waitForTimeout(2000); 

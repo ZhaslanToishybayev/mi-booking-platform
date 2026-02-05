@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     libpq-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
-    && docker-php-ext-install pdo_mysql \
+    && docker-php-ext-install pdo_mysql pdo_pgsql \
     && docker-php-ext-install zip \
     && docker-php-ext-install bcmath \
     && docker-php-ext-install opcache
@@ -35,16 +35,18 @@ RUN composer install --no-dev --optimize-autoloader --no-scripts
 # Копирование всего проекта
 COPY . .
 
-# Генерация ключа и оптимизация
-RUN php artisan key:generate --force || true
+# Копирование и настройка entrypoint
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# Очистка и оптимизация
 RUN php artisan optimize:clear || true
-RUN php artisan optimize || true
 
 # Права
 RUN chown -R www-data:www-data /var/www \
-    && chmod -R 755 /var/www/storage \
-    && chmod -R 755 /var/www/bootstrap/cache
+    && chmod -R 775 /var/www/storage \
+    && chmod -R 775 /var/www/bootstrap/cache
 
-# PHP-FPM конфиг
-EXPOSE 9000
-CMD ["php-fpm"]
+# Render использует порт 10000 по умолчанию
+EXPOSE 10000
+ENTRYPOINT ["entrypoint.sh"]
