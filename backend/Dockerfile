@@ -1,12 +1,8 @@
 FROM php:8.3-fpm
 
 # Установка зависимостей
-# Установка зависимостей и отключение IPv6
-RUN apt-get update && \
-    echo "net.ipv6.conf.all.disable_ipv6 = 1" >> /etc/sysctl.conf && \
-    echo "net.ipv6.conf.default.disable_ipv6 = 1" >> /etc/sysctl.conf && \
-    echo "net.ipv6.conf.lo.disable_ipv6 = 1" >> /etc/sysctl.conf && \
-    apt-get install -y \
+# Установка зависимостей
+RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
