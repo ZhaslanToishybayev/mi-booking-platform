@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Exceptions\NotEnoughTicketsException;
 use App\Models\Booking;
 use App\Models\Event;
-use App\Models\TicketType;
 use App\Repositories\BookingRepository;
 use App\Repositories\EventRepository;
 use Illuminate\Support\Facades\DB;
@@ -29,7 +28,7 @@ class BookingService
 
         return DB::transaction(function () use ($event, $data) {
             // Validate ticket availability
-            $ticketTypes = $this->getEventTicketTypes($event, $data['tickets']);
+            $ticketTypes = $this->getEventTicketTypesFromEvent($event, $data['tickets']);
             $this->validateTicketAvailability($ticketTypes, $data['tickets']);
 
             // Calculate total amount
@@ -102,17 +101,15 @@ class BookingService
         return $total;
     }
 
-    private function getEventTicketTypes(Event $event, array $tickets): array
+    private function getEventTicketTypesFromEvent(Event $event, array $tickets): array
     {
         $ticketTypeIds = collect($tickets)
             ->pluck('ticket_type_id')
             ->unique()
             ->values();
 
-        $ticketTypes = TicketType::where('event_id', $event->id)
-            ->whereIn('id', $ticketTypeIds)
-            ->get()
-            ->keyBy('id');
+        $event->loadMissing('ticketTypes');
+        $ticketTypes = $event->ticketTypes->keyBy('id');
 
         foreach ($ticketTypeIds as $ticketTypeId) {
             if (!isset($ticketTypes[$ticketTypeId])) {
