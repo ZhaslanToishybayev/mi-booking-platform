@@ -63,17 +63,20 @@ class ApiClient {
   // Bookings
   async createBooking(data: CreateBookingRequest): Promise<CreateBookingResponse> {
     const response = await this.client.post<CreateBookingResponse>('/bookings', data)
-    return response.data
+    return this.normalizeBookingUrls(response.data)
   }
 
   async getBooking(token: string): Promise<Booking> {
     const response = await this.client.get<Booking>(`/bookings/${token}`)
-    return response.data
+    return this.normalizeBookingUrls(response.data)
   }
 
   async cancelBooking(token: string): Promise<{ message: string; booking: Booking }> {
     const response = await this.client.post<{ message: string; booking: Booking }>(`/bookings/${token}/cancel`)
-    return response.data
+    return {
+      ...response.data,
+      booking: this.normalizeBookingUrls(response.data.booking),
+    }
   }
 
   // PDF
@@ -85,6 +88,24 @@ class ApiClient {
   getTicketPdfUrl(token: string, ticketId: number): string {
     const path = `/api/v1/bookings/${token}/tickets/${ticketId}/pdf`
     return this.baseUrl ? `${this.baseUrl}${path}` : path
+  }
+
+  private toAbsoluteApiUrl(pathOrUrl: string): string {
+    if (!pathOrUrl) return pathOrUrl
+    if (/^https?:\/\//i.test(pathOrUrl)) return pathOrUrl
+    if (!pathOrUrl.startsWith('/')) return pathOrUrl
+    return this.baseUrl ? `${this.baseUrl}${pathOrUrl}` : pathOrUrl
+  }
+
+  private normalizeBookingUrls<T extends { pdf_url: string; tickets: Array<{ download_url: string }> }>(booking: T): T {
+    return {
+      ...booking,
+      pdf_url: this.toAbsoluteApiUrl(booking.pdf_url),
+      tickets: booking.tickets.map((ticket) => ({
+        ...ticket,
+        download_url: this.toAbsoluteApiUrl(ticket.download_url),
+      })),
+    }
   }
 }
 
