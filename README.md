@@ -25,15 +25,13 @@
 
 ## 📸 Скриншоты
 
-*(Скриншоты интерфейса. Вы можете заменить эти изображения на реальные в папке `docs/screenshots`)*
-
 | Главная страница | Детали события |
 |------------------|----------------|
-| ![Home](docs/screenshots/home.svg) | ![Details](docs/screenshots/details.svg) |
+| ![Home](docs/screenshots/home.png) | ![Details](docs/screenshots/details.png) |
 
-| Бронирование | Мои билеты |
+| Успешное бронирование | Мои бронирования |
 |--------------|------------|
-| ![Booking](docs/screenshots/booking.svg) | ![My Tickets](docs/screenshots/tickets.svg) |
+| ![Booking Success](docs/screenshots/booking-success.png) | ![My Bookings](docs/screenshots/my-bookings.png) |
 
 ---
 
