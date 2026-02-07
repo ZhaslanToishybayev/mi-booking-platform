@@ -21,10 +21,11 @@ class BookingService
     {
         return DB::transaction(function () use ($event, $data) {
             // Validate ticket availability
-            $this->validateTicketAvailability($data['tickets']);
+            $ticketTypes = $this->getEventTicketTypes($event, $data['tickets']);
+            $this->validateTicketAvailability($ticketTypes, $data['tickets']);
 
             // Calculate total amount
-            $totalAmount = $this->calculateTotalAmount($data['tickets']);
+            $totalAmount = $this->calculateTotalAmount($ticketTypes, $data['tickets']);
 
             // Create booking
             $booking = $this->bookingRepository->create([
@@ -39,11 +40,11 @@ class BookingService
             // Decrease availability and create tickets
             $ticketsData = [];
             foreach ($data['tickets'] as $ticketRequest) {
-                $ticketType = TicketType::find($ticketRequest['ticket_type_id']);
+                $ticketType = $ticketTypes[$ticketRequest['ticket_type_id']];
                 $ticketType->decreaseAvailability($ticketRequest['quantity']);
 
                 $ticketsData[] = [
-                    'ticket_type' => $ticketType->name,
+                    'ticket_type' => $this->normalizeTicketType($ticketType->name),
                     'price' => $ticketType->price,
                     'quantity' => $ticketRequest['quantity'],
                 ];
@@ -69,30 +70,53 @@ class BookingService
         return $booking->fresh();
     }
 
-    private function validateTicketAvailability(array $tickets): void
+    private function validateTicketAvailability(array $ticketTypes, array $tickets): void
     {
-        foreach ($tickets as $ticket) {
-            $ticketType = TicketType::find($ticket['ticket_type_id']);
+        foreach ($tickets as $ticketRequest) {
+            $ticketType = $ticketTypes[$ticketRequest['ticket_type_id']];
+            $requestedQuantity = $ticketRequest['quantity'];
 
-            if (!$ticketType) {
-                throw new \RuntimeException("Ticket type {$ticket['ticket_type_id']} not found");
-            }
-
-            if (!$ticketType->isAvailable($ticket['quantity'])) {
-                throw new NotEnoughTicketsException($ticketType->name, $ticket['quantity'], $ticketType->available);
+            if (!$ticketType->isAvailable($requestedQuantity)) {
+                throw new NotEnoughTicketsException($ticketType->name, $requestedQuantity, $ticketType->available);
             }
         }
     }
 
-    private function calculateTotalAmount(array $tickets): float
+    private function calculateTotalAmount(array $ticketTypes, array $tickets): float
     {
         $total = 0;
 
-        foreach ($tickets as $ticket) {
-            $ticketType = TicketType::find($ticket['ticket_type_id']);
-            $total += $ticketType->price * $ticket['quantity'];
+        foreach ($tickets as $ticketRequest) {
+            $ticketType = $ticketTypes[$ticketRequest['ticket_type_id']];
+            $total += $ticketType->price * $ticketRequest['quantity'];
         }
 
         return $total;
+    }
+
+    private function getEventTicketTypes(Event $event, array $tickets): array
+    {
+        $ticketTypeIds = collect($tickets)
+            ->pluck('ticket_type_id')
+            ->unique()
+            ->values();
+
+        $ticketTypes = TicketType::where('event_id', $event->id)
+            ->whereIn('id', $ticketTypeIds)
+            ->get()
+            ->keyBy('id');
+
+        foreach ($ticketTypeIds as $ticketTypeId) {
+            if (!isset($ticketTypes[$ticketTypeId])) {
+                throw new \RuntimeException("Ticket type {$ticketTypeId} not found for event {$event->id}");
+            }
+        }
+
+        return $ticketTypes->all();
+    }
+
+    private function normalizeTicketType(string $ticketType): string
+    {
+        return mb_strtolower(trim($ticketType));
     }
 }
