@@ -7,9 +7,9 @@ class ApiClient {
   private baseUrl: string
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_URL || ''
+    this.baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '')
     this.client = axios.create({
-      baseURL: `${this.baseUrl}/api/v1`,
+      baseURL: this.baseUrl ? `${this.baseUrl}/api/v1` : '/api/v1',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -78,11 +78,13 @@ class ApiClient {
 
   // PDF
   getBookingPdfUrl(token: string): string {
-    return `/api/v1/bookings/${token}/pdf`
+    const path = `/api/v1/bookings/${token}/pdf`
+    return this.baseUrl ? `${this.baseUrl}${path}` : path
   }
 
   getTicketPdfUrl(token: string, ticketId: number): string {
-    return `/api/v1/bookings/${token}/tickets/${ticketId}/pdf`
+    const path = `/api/v1/bookings/${token}/tickets/${ticketId}/pdf`
+    return this.baseUrl ? `${this.baseUrl}${path}` : path
   }
 }
 
