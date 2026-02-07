@@ -7,7 +7,6 @@ use App\Models\Booking;
 use App\Models\Event;
 use App\Repositories\BookingRepository;
 use App\Repositories\EventRepository;
-use Illuminate\Support\Facades\DB;
 
 class BookingService
 {
@@ -18,50 +17,40 @@ class BookingService
 
     public function createBooking(Event $event, array $data): Booking
     {
-        // Some pooled PostgreSQL connections can remain in "aborted transaction"
-        // state after a previous failed query. Reset before starting a new write tx.
-        try {
-            DB::unprepared('ROLLBACK');
-        } catch (\Throwable) {
-            // No active transaction to rollback.
+        // Validate ticket availability
+        $ticketTypes = $this->getEventTicketTypesFromEvent($event, $data['tickets']);
+        $this->validateTicketAvailability($ticketTypes, $data['tickets']);
+
+        // Calculate total amount
+        $totalAmount = $this->calculateTotalAmount($ticketTypes, $data['tickets']);
+
+        // Create booking
+        $booking = $this->bookingRepository->create([
+            'event_id' => $event->id,
+            'email' => $data['email'],
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+            'total_amount' => $totalAmount,
+            'status' => 'confirmed',
+        ]);
+
+        // Decrease availability and create tickets
+        $ticketsData = [];
+        foreach ($data['tickets'] as $ticketRequest) {
+            $ticketType = $ticketTypes[$ticketRequest['ticket_type_id']];
+            $ticketType->decreaseAvailability($ticketRequest['quantity']);
+
+            $ticketsData[] = [
+                'ticket_type' => $this->normalizeTicketType($ticketType->name),
+                'price' => $ticketType->price,
+                'quantity' => $ticketRequest['quantity'],
+            ];
         }
 
-        return DB::transaction(function () use ($event, $data) {
-            // Validate ticket availability
-            $ticketTypes = $this->getEventTicketTypesFromEvent($event, $data['tickets']);
-            $this->validateTicketAvailability($ticketTypes, $data['tickets']);
+        // Create tickets
+        $this->bookingRepository->createTickets($booking, $ticketsData);
 
-            // Calculate total amount
-            $totalAmount = $this->calculateTotalAmount($ticketTypes, $data['tickets']);
-
-            // Create booking
-            $booking = $this->bookingRepository->create([
-                'event_id' => $event->id,
-                'email' => $data['email'],
-                'name' => $data['name'],
-                'phone' => $data['phone'] ?? null,
-                'total_amount' => $totalAmount,
-                'status' => 'confirmed',
-            ]);
-
-            // Decrease availability and create tickets
-            $ticketsData = [];
-            foreach ($data['tickets'] as $ticketRequest) {
-                $ticketType = $ticketTypes[$ticketRequest['ticket_type_id']];
-                $ticketType->decreaseAvailability($ticketRequest['quantity']);
-
-                $ticketsData[] = [
-                    'ticket_type' => $this->normalizeTicketType($ticketType->name),
-                    'price' => $ticketType->price,
-                    'quantity' => $ticketRequest['quantity'],
-                ];
-            }
-
-            // Create tickets
-            $this->bookingRepository->createTickets($booking, $ticketsData);
-
-            return $booking->load('tickets');
-        });
+        return $booking->load('tickets');
     }
 
     public function cancelBooking(string $token): Booking
