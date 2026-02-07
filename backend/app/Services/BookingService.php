@@ -19,6 +19,14 @@ class BookingService
 
     public function createBooking(Event $event, array $data): Booking
     {
+        // Some pooled PostgreSQL connections can remain in "aborted transaction"
+        // state after a previous failed query. Reset before starting a new write tx.
+        try {
+            DB::unprepared('ROLLBACK');
+        } catch (\Throwable) {
+            // No active transaction to rollback.
+        }
+
         return DB::transaction(function () use ($event, $data) {
             // Validate ticket availability
             $ticketTypes = $this->getEventTicketTypes($event, $data['tickets']);
