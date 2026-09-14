@@ -31,10 +31,17 @@ class EventApiTest extends TestCase
     #[Test]
     public function it_filters_events_by_date_range(): void
     {
-        Event::factory()->create(['start_date' => '2026-03-15 19:00:00', 'status' => 'active']);
-        Event::factory()->create(['start_date' => '2026-06-15 19:00:00', 'status' => 'active']);
+        $matchingDate = now()->addMonth()->startOfDay()->addHours(19);
+        $outsideRangeDate = now()->addMonths(4)->startOfDay()->addHours(19);
 
-        $response = $this->getJson('/api/v1/events?date_from=2026-02-01&date_to=2026-04-01');
+        Event::factory()->create(['start_date' => $matchingDate, 'status' => 'active']);
+        Event::factory()->create(['start_date' => $outsideRangeDate, 'status' => 'active']);
+
+        $query = http_build_query([
+            'date_from' => $matchingDate->copy()->subDay()->toDateString(),
+            'date_to' => $matchingDate->copy()->addDay()->toDateString(),
+        ]);
+        $response = $this->getJson("/api/v1/events?{$query}");
 
         $response->assertOk()
             ->assertJsonCount(1, 'data');
