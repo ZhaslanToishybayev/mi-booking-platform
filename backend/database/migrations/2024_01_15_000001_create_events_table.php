@@ -25,12 +25,16 @@ return new class extends Migration
             $table->index(['status', 'start_date']);
         });
 
-        DB::statement("ALTER TABLE events ADD CONSTRAINT events_status_check CHECK (status IN ('active', 'cancelled', 'completed'))");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE events ADD CONSTRAINT events_status_check CHECK (status IN ('active', 'cancelled', 'completed'))");
+        }
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE events DROP CONSTRAINT IF EXISTS events_status_check");
+        if (DB::connection()->getDriverName() !== 'sqlite') {
+            DB::statement("ALTER TABLE events DROP CONSTRAINT IF EXISTS events_status_check");
+        }
         Schema::dropIfExists('events');
     }
 };
